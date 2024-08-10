@@ -9,8 +9,11 @@ setup(
     author="Your Name",
     author_email="mohamedhamma2003@gmail.com",
     url="https://github.com/hcn1z1/AutoRequests", 
-    packages=find_packages(), 
+    packages=find_packages(include=['autorequests', 'autorequests.data', 'autorequests.*']),
     include_package_data=True,  # Include additional files specified in MANIFEST.in
+    package_data={
+        'autorequests.data': ['*.json', '*.ini'],
+    },
     install_requires=[
         "requests",
         "lxml",

@@ -6,10 +6,10 @@ import queue
 import configparser
 from requests import Session
 from datetime import datetime
-from tools import *
+from .tools import *
 from typing import *
 from lxml import html
-from tools.expections import UnsuccessfulRequestError
+from .tools.expections import UnsuccessfulRequestError
 import importlib.resources as pkg_resources
 
 class AutoRequests:

@@ -1,2 +1,2 @@
-include data/*.json
-include data/*.ini
+include autorequests/data/*.json
+include autorequests/data/*.ini
