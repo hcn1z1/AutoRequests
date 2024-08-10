@@ -10,6 +10,7 @@ from tools import *
 from typing import *
 from lxml import html
 from tools.expections import UnsuccessfulRequestError
+import importlib.resources as pkg_resources
 
 class AutoRequests:
     thread_lock = threading.Lock()
@@ -96,7 +97,7 @@ class AutoRequests:
     - Implement the `__configure_proxy` method to handle HTTP proxy connections and rotations.
     """
     def __init__(self,test = None):
-        with open("data/requests.json") as f:
+        with pkg_resources.open_text('autorequests.data', 'requests.json') as f:
             config_ = json.load(f)
             check_obligation(config_,"requests")
             self.websites = config_["websites"]
@@ -106,7 +107,8 @@ class AutoRequests:
                 check_obligation(config_,"requests")
                 self.websites = config_["websites"]
         config = configparser.ConfigParser()
-        config.read("data/config.ini")
+        with pkg_resources.open_text('autorequests.data', 'config.ini') as f:
+            config.read_file(f)
         self.max_threads = int(config["requests"]["max_threads"])
         self.__init_threads()
 

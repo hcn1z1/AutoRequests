@@ -18,7 +18,7 @@ pip install git+https://github.com/hcn1z1/AutoRequests
 ```
 
 ## Requirements
-- Python 3.5>=
+- Python 3.7>=
 - requests library
 - lxml library
 - configparser library
