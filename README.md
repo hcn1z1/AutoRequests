@@ -146,10 +146,10 @@ You can also capture values using regex in one layer and use them in subsequent 
                 "success_request": {
                     "success_code": 200
                 },
-                "collection_regex":{
+                "collection_regex":[{
                     "regex":"\\d+",
                     "variable":"number"
-                }
+                }],
                 "headers": {
                     "type": "DEFAULT"
                 },
