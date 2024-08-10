@@ -1,0 +1,47 @@
+{
+    "websites":[{
+        "name": "https://cosmopolitanlasvegas.mgmresorts.com/identity/",
+        "collect_data":true,
+        "urls":["https://www.bestbuy.com"],
+        "cookies_status": false,
+        "layers": [
+            {
+                "url":"",
+                "method":"GET",
+                "success_request":{
+                    "success_code":200,
+                    "sucess_value":"Login Succesfully"
+                },
+                "collect_data":true,
+                "collection_regex":[
+                    {
+                        "regex":"someregex",
+                        "variable":"cookie_prob"
+                    },
+                    {
+                        "regex":"someregex",
+                        "variable":"api_key"
+                    }
+                ],
+                "cookies": {
+                    "static_status": true,
+                    "static": "your_cookie_value"
+                },
+                "headers":{
+                    "type":"custom",
+                    "headers":{
+
+                    }
+                },
+                "data":{
+                    "type":"json",
+                    "actual_data":{
+                        "name":"{FirstName}"
+                    }
+                }
+            }
+        ]
+    }
+    ]
+}
+    
