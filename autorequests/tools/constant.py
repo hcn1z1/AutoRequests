@@ -5,11 +5,22 @@ REQUESTS_OBLIGATED = [
             ("layers"),
             {
                 "layers":[
-                    ("cookies","static_status"),
+                    ("cookies","static_status",{
+                        "CONDITIONAL":[
+                            ("cookies","static")
+                        ]
+                    }),
+                    ("proxy","use_proxy",{
+                        "CONDITIONAL":[
+                            ("proxy","ip"),
+                            ("proxy","type"),
+                            ("proxy","port")
+                        ]
+                    }),
                     ("success_request"),
                     ("headers","type"),
                     ("data","type"),
-                    ("data","actual_data")
+                    ("data","actual_data"),
                 ]
             }
         ]
