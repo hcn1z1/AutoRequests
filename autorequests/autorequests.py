@@ -4,13 +4,14 @@ import re
 import threading
 import queue
 import configparser
+import random,string
+import importlib.resources as pkg_resources
 from requests import Session
 from datetime import datetime
 from .tools import *
 from typing import *
 from lxml import html
 from .tools.expections import UnsuccessfulRequestError
-import importlib.resources as pkg_resources
 
 class AutoRequests:
     thread_lock = threading.Lock()
@@ -66,12 +67,15 @@ class AutoRequests:
         
     __collect_query(response, query)
         Extracts data from the response using an XPath query.
-        
-    __configure_cookies(response, cookies)
-        (TODO) Sets up cookies based on the response. Not yet implemented.
+    
+    __store_response(response, filename)
+        Save the request html to a file    
+    
+    __configure_cookies(session, cookies)
+        Sets up cookies based on the response. Not yet implemented.
     
     __configure_proxy(session, proxy)
-        (TODO) Sets up a proxy connection before making requests. Not implemented yet
+        Sets up a proxy connection before making requests. Not implemented yet
         
     register(cpn, website)
         Processes the request workflow for a single website, updating the `cpn` dictionary with collected data.
@@ -91,50 +95,49 @@ class AutoRequests:
         auto_filler.enqueue_data(cpn_data)
         auto_filler.shared_queue.join()
 
-    TODO
-    ----
-    - Implement the `__configure_cookies` method to handle cookie setup based on the response.
-    - Implement the `__configure_proxy` method to handle HTTP proxy connections and rotations.
     """
-    def __init__(self,test = None):
+    def __init__(self,file = None):
         with pkg_resources.open_text('autorequests.data', 'requests.json') as f:
             config_ = json.load(f)
             check_obligation(config_,"requests")
             self.websites = config_["websites"]
-        if test:
-            with open(f"{test}") as f:
+        if file:
+            with open(f"{file}") as f:
                 config_ = json.load(f)
                 check_obligation(config_,"requests")
                 self.websites = config_["websites"]
-        config = configparser.ConfigParser()
+        self.config = configparser.ConfigParser()
         with pkg_resources.open_text('autorequests.data', 'config.ini') as f:
-            config.read_file(f)
-        self.max_threads = int(config["requests"]["max_threads"])
+            self.config.read_file(f)
+        self.max_threads = int(self.config["requests"]["max_threads"])
         self.__init_threads()
 
 
     def navigate_and_init_requests(self,layers,cpn):
-        for layer in layers:
-            print(cpn)
+        for count,layer in enumerate(layers,len(layers)):
             url = layer.get("url")
-            headers,cookies,method,data = self.__before_request(layer,cpn)
+            headers,method,data = self.__before_request(layer,cpn)
             data_type = layer["data"]["type"]
-            response:Session = self.__send_request(url, headers, cookies, method, data, data_type)
+            response:Session = self.__send_request(url, headers, method, data, data_type)
+            if layer.get("store_response"):
+                self.__store_response(response)
             if not self.__success_checking(response,layer):
-                raise UnsuccessfulRequestError()
+                raise UnsuccessfulRequestError(path = (count,url))
             cpn = self.__after_request(response,layer,cpn)
 
 
-    def __send_request(self, url: str, headers: dict, cookies: dict, method: str, data: Any, data_type: str) -> Session:
+    def __send_request(self, url: str, headers: dict, method: str, data: Any, data_type: str) -> Session:
         session = self.__initialize_session()
         response = None
         if method == "post":
             if data_type == "json":
-                response = session.post(url, json=data, headers=headers)
+                response = session.post(url, json=data, headers=headers,timeout = int(self.config["requests"]["timeout"]))
+                
             else:
-                response = session.post(url, data=data, headers=headers)
+                response = session.post(url, data=data, headers=headers,timeout = int(self.config["requests"]["timeout"]))
         elif method == "get":
-            response = session.get(url, headers=headers, cookies=cookies)
+            response = session.get(url, headers=headers,timeout = int(self.config["requests"]["timeout"]))
+
         return response
 
     def __init_threads(self):
@@ -150,10 +153,11 @@ class AutoRequests:
 
     def __before_request(self,field_info,cpn) -> tuple[dict,str,str]:
         headers = HEADERS if field_info["headers"]["type"].upper() == "DEFAULT" else field_info["headers"]["headers"]
-        cookies = {} if not field_info["cookies"]["static_status"] else field_info["cookies"]["static"]
+        None if not field_info["cookies"]["static_status"] else self.__configure_cookies(field_info["cookies"]["static"])
+        None if not field_info["proxy"]["use_proxy"] else self.__configure_proxy(field_info["proxy"])
         method  = method_configuration(field_info.get("method"))
         data = recursive_data_render(field_info["data"]["actual_data"],cpn)
-        return headers,cookies,method,data
+        return headers,method,data
 
     def __after_request(self,response,field,cpn):
         # collecting data from response 
@@ -174,6 +178,12 @@ class AutoRequests:
         if field.get("sleep"):
             time.sleep(int(field["sleep"]))
         return cpn
+    
+    def __store_response(self,response:Session,filename = "response.html"):
+        file = open(filename,"w+")
+        file.write(response.text)
+        file.close()
+
     def __success_checking(self,response:Session,layer:dict):
         return all([success_output(response,item) for item in layer["success_request"].items()])
 
@@ -190,11 +200,25 @@ class AutoRequests:
         return result[0] if len(result) > 0 else ""
 
 
-    def __configure_cookies(self,response:Session,cookies:dict):
-        pass
-    
-    def __configure_proxy(self,session:Session,proxy):
-        pass
+    def __configure_cookies(self,session:Session,cookies:dict):
+        session.cookies.update(cookies)
+
+    def __configure_proxy(self,session:Session,proxy:dict):
+        session.proxies.update({
+            proxy["type"]:'{}://{}:{}'.format(proxy["type"],proxy["ip"],proxy["port"])
+        })
+
+    def __set_static_variables(self,cpn):
+        random_string_length = self.config["requests"]["ran_str_len"] if self.config["requests"].get("ran_str_len") else 6
+        random_integer_length = self.config["requests"]["ran_int_len"] if self.config["requests"].get("ran_int_len") else 4
+        random_ascii_length = self.config["requests"]["ran_asc_len"] if self.config["requests"].get("ran_asc_len") else 8
+        random_string = random.choices("".join(random.choices(list(string.ascii_lowercase),k= random_string_length)))
+        random_integer = random.choices("".join(random.choices(list(string.digits),k= random_string_length)))
+        random_ascii = random.choices("".join(random.choices(list(string.ascii_letters + string.digits),k= random_string_length)))
+        cpn["ranstr"],cpn["ranint"],cpn["random"] = random_string,random_integer,random_ascii
+        if cpn.get("Birthday"):
+            month,day,year = cpn["Birthday"].split("/")
+            cpn["month"],cpn["day"],cpn["year"] = int(month),int(day),int(year)
 
     def register(self, cpn:dict, website:dict):
         self.navigate_and_init_requests(website["layers"], cpn)
@@ -204,7 +228,6 @@ class AutoRequests:
             if not self.shared_queue.empty():
                 cpn, website = self.shared_queue.get()
                 successful = self.register(cpn, website)
-                print(f"Request {'succeeded' if successful else 'failed'} for {website['url']}")
                 self.shared_queue.task_done()
 
     def enqueue_data(self, cpn):

@@ -27,6 +27,9 @@
                     "static_status": true,
                     "static": "your_cookie_value"
                 },
+                "proxy":{
+                    "use_proxy":false
+                },
                 "headers":{
                     "type":"custom",
                     "headers":{

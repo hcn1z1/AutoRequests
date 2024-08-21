@@ -2,15 +2,15 @@ from setuptools import setup, find_packages
 
 setup(
     name="autorequests", 
-    version="0.1.0",  # Version of your package
-    description="A Python library for automating HTTP requests",  # Short description
-    long_description=open("README.md").read(),  # Long description from your README file
+    version="0.1.5",  # Version of your package
+    description="A Python library for automating HTTP requests",  
+    long_description=open("README.md").read(),  
     long_description_content_type="text/markdown",
     author="hcn1z1",
     author_email="mohamedhamma2003@gmail.com",
     url="https://github.com/hcn1z1/AutoRequests", 
     packages=find_packages(include=['autorequests', 'autorequests.data', 'autorequests.*']),
-    include_package_data=True,  # Include additional files specified in MANIFEST.in
+    include_package_data=True,
     package_data={
         'autorequests.data': ['*.json', '*.ini'],
     },
