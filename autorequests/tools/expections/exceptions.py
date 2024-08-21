@@ -3,7 +3,8 @@ class CustomException(Exception):
     pass
 
 class UnsuccessfulRequestError(CustomException):
-    def __init__(self, message = "Unsuccessful Request, couldn't check all success values. Maybe change them or add more layers") -> None:
+    def __init__(self, message = "Unsuccessful Request, couldn't check all success values. Maybe change them or add more layers",path = None) -> None:
+        message = message +  f"\n (field,url) => {path}" if path != None else path
         self.message = message
         super().__init__(self.message)
 

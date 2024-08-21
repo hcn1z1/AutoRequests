@@ -1,4 +1,4 @@
-from .constant import REQUESTS_OBLIGATED, SELENIUM_OBLIGATED
+from .constant import REQUESTS_OBLIGATED
 from .expections import *
 
 def method_configuration(method):
@@ -14,7 +14,7 @@ def recursive_data_render(request_data:dict,cpn:dict):
     for key,value in request_data.items():
         value_type = type(value)
         if value_type == dict:
-            request_data[key] = recursive_data_render(value)
+            request_data[key] = recursive_data_render(value,cpn)
         elif value_type == str:
             key,value = key.format(**cpn),value.format(**cpn)
 
@@ -53,6 +53,6 @@ def check_obligation(config:dict,script:str):
     if not config.get("websites"):
         raise BadConfigError(keys= ("website"))
     websites = config.get("websites")
-    obligations = REQUESTS_OBLIGATED if script.lower() == "requests" else SELENIUM_OBLIGATED
+    obligations = REQUESTS_OBLIGATED
     for obligation in obligations:
         recursive_obligation_checking(config,obligation)
