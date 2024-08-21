@@ -11,13 +11,14 @@ def method_configuration(method):
     return method_dict[method] if method_dict.get(method) else "get"
 
 def recursive_data_render(request_data:dict,cpn:dict):
+    rendered_dict = {}
     for key,value in request_data.items():
-        value_type = type(value)
-        if value_type == dict:
-            request_data[key] = recursive_data_render(value,cpn)
-        elif value_type == str:
+        if isinstance(value,dict):
+            rendered_dict[key] = recursive_data_render(value,cpn)
+        elif isinstance(value,str):
             key,value = key.format(**cpn),value.format(**cpn)
-
+            rendered_dict[key] = value
+    return rendered_dict
 
 def success_output(response,input_query = ("success_code",200)):
     if input_query[0] == "success_code":
@@ -44,6 +45,8 @@ def recursive_obligation_checking(config: dict, obligation: dict):
                         if len(value) > 1:
                             if sub_config.get(value[1]) is None:
                                 raise BadConfigError(path=key, keys=(part_index, value[0], value[1]))
+                            if len(value) != 2 and isinstance(value[2],dict) and bool(sub_config.get(value[1])):
+                                recursive_obligation_checking(config=config, obligation={key:value[2]["CONDITIONAL"]})
                     elif isinstance(value, dict):
                         recursive_obligation_checking(config=part, obligation=value)
         else:
